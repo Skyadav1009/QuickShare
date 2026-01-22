@@ -6,6 +6,8 @@
     <title>ShareDrop AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Inline SVG favicon to avoid 404 for /favicon.ico -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23007ACC' width='100' height='100'/%3E%3Ctext x='50' y='58' font-size='54' text-anchor='middle' fill='white' font-family='Inter, Arial, sans-serif'%3ES%3C/text%3E%3C/svg%3E">
     <style>
       body {
         font-family: 'Inter', sans-serif;
@@ -26,20 +28,10 @@
         background: #94a3b8; 
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0"
-  }
-}
-</script>
+  <!-- Removed importmap from Google AI Studio (not needed for local Vite build) -->
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

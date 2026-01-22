@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, FileMeta } from '../types';
-import { updateContainerText, addFileToContainer, removeFileFromContainer } from '../services/storageService';
-import { summarizeText, formatText } from '../services/geminiService';
+import { updateContainerText, addFileToContainer, removeFileFromContainer, getFileDownloadUrl } from '../services/storageService';
 import Button from './Button';
-import { FileText, Upload, Trash2, Download, Copy, Wand2, RefreshCw } from 'lucide-react';
+import { FileText, Upload, Trash2, Download, Copy, Save, Check, RefreshCw } from 'lucide-react';
 
 interface ContainerViewProps {
   container: Container;
@@ -15,25 +14,30 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
   const [activeTab, setActiveTab] = useState<'files' | 'text'>('files');
   const [text, setText] = useState(container.textContent);
   const [isSavingText, setIsSavingText] = useState(false);
+  const [textSaved, setTextSaved] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiSummary, setAiSummary] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-save text effect
+  // Sync text when container changes
   useEffect(() => {
-    const timeoutId = setTimeout(async () => {
-      if (text !== container.textContent) {
-        setIsSavingText(true);
-        await updateContainerText(container.id, text);
-        setIsSavingText(false);
-        refreshContainer(); // Sync state
-      }
-    }, 1000); // Debounce save 1s
+    setText(container.textContent);
+  }, [container.textContent]);
 
-    return () => clearTimeout(timeoutId);
-  }, [text, container.id, container.textContent, refreshContainer]);
+  // Manual save text function
+  const handleSaveText = async () => {
+    setIsSavingText(true);
+    try {
+      await updateContainerText(container.id, text);
+      setTextSaved(true);
+      setTimeout(() => setTextSaved(false), 2000);
+      refreshContainer();
+    } catch (error) {
+      alert('Failed to save text');
+    } finally {
+      setIsSavingText(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -58,36 +62,19 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
   };
 
   const handleDownload = (file: FileMeta) => {
-    if (file.dataUrl) {
-      const link = document.createElement('a');
-      link.href = file.dataUrl;
-      link.download = file.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    // Use the API download URL
+    const downloadUrl = getFileDownloadUrl(container.id, file.id);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleCopyText = () => {
     navigator.clipboard.writeText(text);
     alert('Copied to clipboard!');
-  };
-
-  const handleAiAction = async (action: 'summarize' | 'professional' | 'casual') => {
-    setAiLoading(true);
-    try {
-      if (action === 'summarize') {
-        const result = await summarizeText(text);
-        setAiSummary(result);
-      } else {
-        const result = await formatText(text, action);
-        setText(result);
-        await updateContainerText(container.id, result); // Force immediate save
-        refreshContainer();
-      }
-    } finally {
-      setAiLoading(false);
-    }
   };
 
   return (
@@ -211,16 +198,31 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
               <div className="flex justify-between items-center">
                  <div className="flex items-center space-x-2">
                     <h3 className="text-lg font-medium text-gray-900">Shared Clipboard</h3>
-                    {isSavingText ? (
-                        <span className="text-xs text-gray-400 animate-pulse">Saving...</span>
-                    ) : (
-                        <span className="text-xs text-green-500">Synced</span>
+                    {textSaved && (
+                        <span className="text-xs text-green-500 flex items-center">
+                          <Check className="h-3 w-3 mr-1" /> Saved!
+                        </span>
                     )}
                  </div>
-                 <Button variant="ghost" onClick={handleCopyText} title="Copy to local clipboard">
-                   <Copy className="h-4 w-4 mr-2" />
-                   Copy
-                 </Button>
+                 <div className="flex space-x-2">
+                   <Button 
+                     variant="primary" 
+                     onClick={handleSaveText} 
+                     disabled={isSavingText}
+                     className="flex items-center"
+                   >
+                     {isSavingText ? (
+                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                     ) : (
+                       <Save className="h-4 w-4 mr-2" />
+                     )}
+                     {isSavingText ? 'Saving...' : 'Save Text'}
+                   </Button>
+                   <Button variant="ghost" onClick={handleCopyText} title="Copy to local clipboard">
+                     <Copy className="h-4 w-4 mr-2" />
+                     Copy
+                   </Button>
+                 </div>
               </div>
               
               <div className="flex-1 relative">
@@ -231,54 +233,6 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                   placeholder="Type or paste text here to share between devices..."
                   style={{ minHeight: '300px' }}
                 />
-              </div>
-
-              {/* AI Toolbar */}
-              <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                 <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-indigo-900 flex items-center">
-                        <Wand2 className="h-4 w-4 mr-2" />
-                        AI Assistant
-                    </h4>
-                 </div>
-                 <div className="flex flex-wrap gap-2">
-                    <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        onClick={() => handleAiAction('summarize')}
-                        isLoading={aiLoading}
-                        disabled={!text}
-                        className="text-xs"
-                    >
-                        Summarize
-                    </Button>
-                    <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        onClick={() => handleAiAction('professional')}
-                        isLoading={aiLoading}
-                        disabled={!text}
-                        className="text-xs"
-                    >
-                        Make Professional
-                    </Button>
-                    <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        onClick={() => handleAiAction('casual')}
-                        isLoading={aiLoading}
-                        disabled={!text}
-                        className="text-xs"
-                    >
-                        Make Casual
-                    </Button>
-                 </div>
-                 {aiSummary && (
-                    <div className="mt-4 p-3 bg-white rounded border border-indigo-100 text-sm text-gray-700">
-                        <p className="font-semibold text-xs text-gray-500 uppercase mb-1">Summary</p>
-                        {aiSummary}
-                    </div>
-                 )}
               </div>
             </div>
           )}

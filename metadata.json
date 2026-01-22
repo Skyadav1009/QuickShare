@@ -1,5 +1,5 @@
 {
   "name": "ShareDrop AI",
-  "description": "A secure, serverless file and text sharing platform. Create password-protected containers to share content between devices instantly. Features AI-powered text summarization and formatting using Gemini.",
+  "description": "A secure, serverless file and text sharing platform. Create password-protected containers to share content between devices instantly.",
   "requestFramePermissions": []
 }

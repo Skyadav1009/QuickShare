@@ -3,15 +3,20 @@ import { HashRouter } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Button from './components/Button';
 import ContainerView from './components/ContainerView';
-import { createContainer, searchContainers, verifyPassword, getContainerById } from './services/storageService';
+import { createContainer, searchContainers, getContainerById, unlockContainer, getRecentContainers } from './services/storageService';
 import { Container, ContainerSummary, ViewState } from './types';
 import { Search, Plus, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const App: React.FC = () => {
+  // Diagnostic message to confirm component render
+  // eslint-disable-next-line no-console
+  useEffect(() => { console.log('App component rendered'); }, []);
   const [viewState, setViewState] = useState<ViewState>(ViewState.HOME);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ContainerSummary[]>([]);
+  const [recentContainers, setRecentContainers] = useState<ContainerSummary[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   
   // Selection State
   const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
@@ -22,6 +27,25 @@ const App: React.FC = () => {
   const [createPassword, setCreatePassword] = useState('');
   const [unlockPassword, setUnlockPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Load recent containers on mount and when returning to home
+  useEffect(() => {
+    if (viewState === ViewState.HOME) {
+      loadRecentContainers();
+    }
+  }, [viewState]);
+
+  const loadRecentContainers = async () => {
+    setIsLoadingRecent(true);
+    try {
+      const containers = await getRecentContainers();
+      setRecentContainers(containers);
+    } catch (error) {
+      console.error('Failed to load recent containers:', error);
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  };
 
   // Handle Search
   useEffect(() => {
@@ -60,9 +84,8 @@ const App: React.FC = () => {
     if (!selectedContainerId || !unlockPassword) return;
 
     try {
-      const isValid = await verifyPassword(selectedContainerId, unlockPassword);
-      if (isValid) {
-        const container = await getContainerById(selectedContainerId);
+      const container = await unlockContainer(selectedContainerId, unlockPassword);
+      if (container) {
         setActiveContainer(container);
         setViewState(ViewState.CONTAINER);
         setUnlockPassword('');
@@ -183,6 +206,63 @@ const App: React.FC = () => {
                     No containers found matching "{searchQuery}"
                   </div>
                 )
+              )}
+
+              {/* All Containers Section */}
+              {!searchQuery && (
+                <div className="mt-8">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">All Containers</h2>
+                  {isLoadingRecent ? (
+                    <div className="text-center py-8">
+                      <svg className="animate-spin h-8 w-8 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <p className="text-gray-500 mt-2">Loading containers...</p>
+                    </div>
+                  ) : recentContainers.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {recentContainers.map((container) => (
+                        <div 
+                          key={container.id} 
+                          onClick={() => openUnlockScreen(container.id)}
+                          className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center">
+                              <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                <Lock className="h-6 w-6 text-indigo-600" />
+                              </div>
+                              <div className="ml-4">
+                                <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                  {container.name}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                  Created {new Date(container.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-indigo-500" />
+                          </div>
+                          <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+                            <span className="flex items-center">
+                              <ShieldCheck className="h-4 w-4 mr-1 text-green-500" /> Protected
+                            </span>
+                            <span>•</span>
+                            <span>{container.fileCount} Files</span>
+                            <span>•</span>
+                            <span>{container.hasText ? 'Has Text' : 'No Text'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-500 py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                      <Lock className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                      <p>No containers yet. Create your first one!</p>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
