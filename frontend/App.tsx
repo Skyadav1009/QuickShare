@@ -120,35 +120,35 @@ const App: React.FC = () => {
           
           {/* HOME VIEW */}
           {viewState === ViewState.HOME && (
-            <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+            <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-12 lg:px-8">
+              <div className="text-center mb-8 sm:mb-12">
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
                   Share files instantly across devices
                 </h1>
-                <p className="mt-4 text-lg text-gray-500">
+                <p className="mt-3 sm:mt-4 text-sm sm:text-lg text-gray-500 px-2">
                   Secure, password-protected containers. No login required.
                 </p>
-                <div className="mt-8 flex justify-center">
+                <div className="mt-6 sm:mt-8 flex justify-center px-4">
                   <Button 
                     onClick={() => setViewState(ViewState.CREATE)}
-                    className="flex items-center text-lg px-8 py-3"
+                    className="flex items-center text-sm sm:text-lg px-4 sm:px-8 py-2 sm:py-3 w-full sm:w-auto justify-center"
                   >
-                    <Plus className="mr-2 h-5 w-5" />
-                    Create New Container
+                    <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    Create Container
                   </Button>
                 </div>
               </div>
 
               {/* Search Section */}
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="Search for an existing container by name..."
+                    className="block w-full pl-10 pr-3 py-3 sm:py-4 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    placeholder="Search containers..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -165,36 +165,36 @@ const App: React.FC = () => {
 
               {/* Results Grid */}
               {searchResults.length > 0 ? (
-                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                 <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
                     {searchResults.map((container) => (
                       <div 
                         key={container.id} 
                         onClick={() => openUnlockScreen(container.id)}
-                        className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group"
+                        className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group active:bg-gray-50"
                       >
                         <div className="flex justify-between items-start">
-                          <div className="flex items-center">
-                            <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                              <Lock className="h-6 w-6 text-indigo-600" />
+                          <div className="flex items-center min-w-0 flex-1">
+                            <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors flex-shrink-0">
+                              <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
                             </div>
-                            <div className="ml-4">
-                              <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                            <div className="ml-3 sm:ml-4 min-w-0">
+                              <h3 className="text-base sm:text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
                                 {container.name}
                               </h3>
-                              <p className="text-sm text-gray-500">
-                                Created {new Date(container.createdAt).toLocaleDateString()}
+                              <p className="text-xs sm:text-sm text-gray-500">
+                                {new Date(container.createdAt).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-indigo-500" />
+                          <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-indigo-500 flex-shrink-0 ml-2" />
                         </div>
-                        <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:space-x-4 text-xs sm:text-sm text-gray-500">
                            <span className="flex items-center">
-                             <ShieldCheck className="h-4 w-4 mr-1 text-green-500" /> Protected
+                             <ShieldCheck className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-green-500" /> Protected
                            </span>
-                           <span>•</span>
+                           <span className="hidden sm:inline">•</span>
                            <span>{container.fileCount} Files</span>
-                           <span>•</span>
+                           <span className="hidden sm:inline">•</span>
                            <span>{container.hasText ? 'Has Text' : 'No Text'}</span>
                         </div>
                       </div>
@@ -210,56 +210,56 @@ const App: React.FC = () => {
 
               {/* All Containers Section */}
               {!searchQuery && (
-                <div className="mt-8">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">All Containers</h2>
+                <div className="mt-6 sm:mt-8">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">All Containers</h2>
                   {isLoadingRecent ? (
-                    <div className="text-center py-8">
-                      <svg className="animate-spin h-8 w-8 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <div className="text-center py-6 sm:py-8">
+                      <svg className="animate-spin h-6 w-6 sm:h-8 sm:w-8 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <p className="text-gray-500 mt-2">Loading containers...</p>
+                      <p className="text-gray-500 mt-2 text-sm">Loading containers...</p>
                     </div>
                   ) : recentContainers.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
                       {recentContainers.map((container) => (
                         <div 
                           key={container.id} 
                           onClick={() => openUnlockScreen(container.id)}
-                          className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group"
+                          className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group active:bg-gray-50"
                         >
                           <div className="flex justify-between items-start">
-                            <div className="flex items-center">
-                              <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                <Lock className="h-6 w-6 text-indigo-600" />
+                            <div className="flex items-center min-w-0 flex-1">
+                              <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors flex-shrink-0">
+                                <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
                               </div>
-                              <div className="ml-4">
-                                <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                              <div className="ml-3 sm:ml-4 min-w-0">
+                                <h3 className="text-base sm:text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
                                   {container.name}
                                 </h3>
-                                <p className="text-sm text-gray-500">
-                                  Created {new Date(container.createdAt).toLocaleDateString()}
+                                <p className="text-xs sm:text-sm text-gray-500">
+                                  {new Date(container.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
-                            <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-indigo-500" />
+                            <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-indigo-500 flex-shrink-0 ml-2" />
                           </div>
-                          <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+                          <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:space-x-4 text-xs sm:text-sm text-gray-500">
                             <span className="flex items-center">
-                              <ShieldCheck className="h-4 w-4 mr-1 text-green-500" /> Protected
+                              <ShieldCheck className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-green-500" /> Protected
                             </span>
-                            <span>•</span>
+                            <span className="hidden sm:inline">•</span>
                             <span>{container.fileCount} Files</span>
-                            <span>•</span>
+                            <span className="hidden sm:inline">•</span>
                             <span>{container.hasText ? 'Has Text' : 'No Text'}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center text-gray-500 py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
-                      <Lock className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                      <p>No containers yet. Create your first one!</p>
+                    <div className="text-center text-gray-500 py-6 sm:py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                      <Lock className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm">No containers yet. Create your first one!</p>
                     </div>
                   )}
                 </div>
@@ -269,11 +269,11 @@ const App: React.FC = () => {
 
           {/* CREATE VIEW */}
           {viewState === ViewState.CREATE && (
-            <div className="max-w-md mx-auto px-4 py-12">
-               <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
-                 <div className="mb-6 text-center">
-                    <h2 className="text-2xl font-bold text-gray-900">New Container</h2>
-                    <p className="text-sm text-gray-500 mt-1">Set a name and password to secure your files.</p>
+            <div className="max-w-md mx-auto px-3 sm:px-4 py-6 sm:py-12">
+               <div className="bg-white py-6 sm:py-8 px-4 sm:px-6 shadow rounded-lg">
+                 <div className="mb-4 sm:mb-6 text-center">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">New Container</h2>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">Set a name and password to secure your files.</p>
                  </div>
                  <form className="space-y-6" onSubmit={handleCreate}>
                     <div>
@@ -325,14 +325,14 @@ const App: React.FC = () => {
 
           {/* UNLOCK VIEW */}
           {viewState === ViewState.UNLOCK && (
-            <div className="max-w-md mx-auto px-4 py-12">
-               <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10 border-t-4 border-indigo-600">
-                 <div className="mb-6 text-center">
-                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
-                      <Lock className="h-6 w-6 text-indigo-600" />
+            <div className="max-w-md mx-auto px-3 sm:px-4 py-6 sm:py-12">
+               <div className="bg-white py-6 sm:py-8 px-4 sm:px-6 shadow rounded-lg border-t-4 border-indigo-600">
+                 <div className="mb-4 sm:mb-6 text-center">
+                    <div className="mx-auto flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-indigo-100">
+                      <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
                     </div>
-                    <h2 className="mt-3 text-2xl font-bold text-gray-900">Unlock Container</h2>
-                    <p className="text-sm text-gray-500 mt-1">Enter the password to access these files.</p>
+                    <h2 className="mt-2 sm:mt-3 text-xl sm:text-2xl font-bold text-gray-900">Unlock Container</h2>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">Enter the password to access these files.</p>
                  </div>
                  <form className="space-y-6" onSubmit={handleUnlock}>
                     <div>
