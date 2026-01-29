@@ -165,14 +165,14 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
 
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden min-h-[500px] sm:min-h-[600px] flex flex-col">
+      <div className="bg-zinc-900 rounded-lg shadow-xl shadow-black/30 border border-zinc-800 overflow-hidden min-h-[500px] sm:min-h-[600px] flex flex-col">
         {/* Header */}
-        <div className="bg-indigo-600 px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+        <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center truncate">
+            <h2 className="text-lg sm:text-2xl font-bold text-zinc-900 flex items-center truncate">
               <span className="mr-2">📦</span> <span className="truncate">{container.name}</span>
             </h2>
-            <p className="text-indigo-100 text-xs sm:text-sm mt-1 truncate">
+            <p className="text-amber-900/70 text-xs sm:text-sm mt-1 truncate">
               ID: {container.id.slice(0, 8)}...
             </p>
           </div>
@@ -182,14 +182,14 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-zinc-700">
           <nav className="-mb-px flex">
             <button
               onClick={() => setActiveTab('files')}
               className={`w-1/3 py-2 sm:py-4 px-1 text-center border-b-2 font-medium text-xs sm:text-sm ${
                 activeTab === 'files'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-amber-500 text-amber-400'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
               }`}
             >
               Files ({container.files.length})
@@ -198,8 +198,8 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
               onClick={() => setActiveTab('text')}
               className={`w-1/3 py-2 sm:py-4 px-1 text-center border-b-2 font-medium text-xs sm:text-sm ${
                 activeTab === 'text'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-amber-500 text-amber-400'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
               }`}
             >
               Text
@@ -208,8 +208,8 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
               onClick={() => setActiveTab('chat')}
               className={`w-1/3 py-2 sm:py-4 px-1 text-center border-b-2 font-medium text-xs sm:text-sm flex items-center justify-center gap-1 ${
                 activeTab === 'chat'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-amber-500 text-amber-400'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
               }`}
             >
               <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -219,11 +219,11 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-3 sm:p-6 bg-gray-50">
+        <div className="flex-1 p-3 sm:p-6 bg-zinc-950">
           {activeTab === 'files' && (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                <h3 className="text-base sm:text-lg font-medium text-gray-900">Stored Files</h3>
+                <h3 className="text-base sm:text-lg font-medium text-white">Stored Files</h3>
                 <div className="relative">
                   <input
                     type="file"
@@ -234,7 +234,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                   />
                   <label
                     htmlFor="file-upload"
-                    className={`cursor-pointer inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm w-full sm:w-auto justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`cursor-pointer inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-md text-zinc-900 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 shadow-sm w-full sm:w-auto justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     {isUploading ? 'Uploading...' : 'Upload File'}
@@ -243,21 +243,21 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
               </div>
 
               {container.files.length === 0 ? (
-                <div className="text-center py-8 sm:py-12 border-2 border-dashed border-gray-300 rounded-lg">
-                  <FileText className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
-                  <p className="mt-2 text-xs sm:text-sm text-gray-500">No files yet. Upload one to share.</p>
+                <div className="text-center py-8 sm:py-12 border-2 border-dashed border-zinc-700 rounded-lg">
+                  <FileText className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-zinc-600" />
+                  <p className="mt-2 text-xs sm:text-sm text-zinc-500">No files yet. Upload one to share.</p>
                 </div>
               ) : (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {container.files.map((file) => (
-                    <li key={file.id} className="col-span-1 bg-white rounded-lg shadow divide-y divide-gray-200">
+                    <li key={file.id} className="col-span-1 bg-zinc-900 rounded-lg shadow border border-zinc-800 divide-y divide-zinc-800">
                       <div className="w-full flex items-center justify-between p-4 sm:p-6 space-x-4 sm:space-x-6">
                         <div className="flex-1 truncate min-w-0">
                           <div className="flex items-center space-x-3">
-                            <h3 className="text-gray-900 text-xs sm:text-sm font-medium truncate" title={file.name}>{file.name}</h3>
+                            <h3 className="text-white text-xs sm:text-sm font-medium truncate" title={file.name}>{file.name}</h3>
                           </div>
-                          <p className="mt-1 text-gray-500 text-xs truncate">{(file.size / 1024).toFixed(1)} KB</p>
-                          <p className="text-gray-400 text-xs">{new Date(file.createdAt).toLocaleTimeString()}</p>
+                          <p className="mt-1 text-zinc-400 text-xs truncate">{(file.size / 1024).toFixed(1)} KB</p>
+                          <p className="text-zinc-500 text-xs">{new Date(file.createdAt).toLocaleTimeString()}</p>
                         </div>
                         {isImageFile(file) ? (
                           <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden">
@@ -268,27 +268,27 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                             />
                           </div>
                         ) : (
-                          <div className="bg-indigo-100 p-2 rounded-full flex-shrink-0">
-                            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
+                          <div className="bg-amber-500/20 p-2 rounded-full flex-shrink-0">
+                            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
                           </div>
                         )}
                       </div>
-                      <div className="-mt-px flex divide-x divide-gray-200">
+                      <div className="-mt-px flex divide-x divide-zinc-800">
                         <div className="w-0 flex-1 flex">
                           <button
                             onClick={() => handleDownload(file)}
-                            className="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-3 sm:py-4 text-xs sm:text-sm text-gray-700 font-medium border border-transparent rounded-bl-lg hover:text-gray-500 active:bg-gray-100"
+                            className="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-3 sm:py-4 text-xs sm:text-sm text-zinc-300 font-medium border border-transparent rounded-bl-lg hover:text-amber-400 active:bg-zinc-800"
                           >
-                            <Download className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" aria-hidden="true" />
+                            <Download className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" aria-hidden="true" />
                             <span className="ml-2 sm:ml-3">Download</span>
                           </button>
                         </div>
                         <div className="-ml-px w-0 flex-1 flex">
                           <button
                             onClick={() => handleRemoveFile(file.id)}
-                            className="relative w-0 flex-1 inline-flex items-center justify-center py-3 sm:py-4 text-xs sm:text-sm text-red-700 font-medium border border-transparent rounded-br-lg hover:text-red-500 active:bg-red-50"
+                            className="relative w-0 flex-1 inline-flex items-center justify-center py-3 sm:py-4 text-xs sm:text-sm text-red-400 font-medium border border-transparent rounded-br-lg hover:text-red-300 active:bg-zinc-800"
                           >
-                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" aria-hidden="true" />
+                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" aria-hidden="true" />
                             <span className="ml-2 sm:ml-3">Delete</span>
                           </button>
                         </div>
@@ -304,9 +304,9 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
             <div className="h-full flex flex-col space-y-3 sm:space-y-4">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
                  <div className="flex items-center space-x-2">
-                    <h3 className="text-base sm:text-lg font-medium text-gray-900">Shared Clipboard</h3>
+                    <h3 className="text-base sm:text-lg font-medium text-white">Shared Clipboard</h3>
                     {textSaved && (
-                        <span className="text-xs text-green-500 flex items-center">
+                        <span className="text-xs text-emerald-400 flex items-center">
                           <Check className="h-3 w-3 mr-1" /> Saved!
                         </span>
                     )}
@@ -336,7 +336,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  className="w-full h-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                  className="w-full h-full p-3 sm:p-4 border border-zinc-700 rounded-lg bg-zinc-800 text-white placeholder-zinc-500 focus:ring-amber-500 focus:border-amber-500 resize-none font-mono text-sm"
                   placeholder="Type or paste text here to share..."
                   style={{ minHeight: '250px' }}
                 />
@@ -348,14 +348,14 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
             <div className="h-full flex flex-col" style={{ minHeight: '350px' }}>
               {/* Role selector */}
               <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:space-x-4">
-                <span className="text-sm text-gray-600">Chat as:</span>
-                <div className="flex rounded-md overflow-hidden border border-gray-300 w-full sm:w-auto">
+                <span className="text-sm text-zinc-400">Chat as:</span>
+                <div className="flex rounded-md overflow-hidden border border-zinc-700 w-full sm:w-auto">
                   <button
                     onClick={() => setChatRole('owner')}
                     className={`flex-1 sm:flex-none px-4 py-2 text-sm font-medium ${
                       chatRole === 'owner'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        ? 'bg-amber-500 text-zinc-900'
+                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                     }`}
                   >
                     Owner
@@ -364,8 +364,8 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                     onClick={() => setChatRole('visitor')}
                     className={`flex-1 sm:flex-none px-4 py-2 text-sm font-medium ${
                       chatRole === 'visitor'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        ? 'bg-amber-500 text-zinc-900'
+                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                     }`}
                   >
                     Visitor
@@ -374,10 +374,10 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
               </div>
 
               {/* Messages */}
-              <div className="flex-1 bg-white border border-gray-200 rounded-lg overflow-y-auto p-3 sm:p-4 space-y-3" style={{ maxHeight: '250px', minHeight: '150px' }}>
+              <div className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg overflow-y-auto p-3 sm:p-4 space-y-3" style={{ maxHeight: '250px', minHeight: '150px' }}>
                 {messages.length === 0 ? (
-                  <div className="text-center py-6 sm:py-8 text-gray-500">
-                    <MessageCircle className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mb-2" />
+                  <div className="text-center py-6 sm:py-8 text-zinc-500">
+                    <MessageCircle className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-zinc-600 mb-2" />
                     <p className="text-sm">No messages yet. Start a conversation!</p>
                   </div>
                 ) : (
@@ -389,8 +389,8 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                       <div
                         className={`max-w-[85%] sm:max-w-[70%] rounded-lg px-3 sm:px-4 py-2 ${
                           msg.sender === 'owner'
-                            ? 'bg-gray-200 text-gray-800'
-                            : 'bg-indigo-600 text-white'
+                            ? 'bg-zinc-700 text-zinc-200'
+                            : 'bg-gradient-to-r from-amber-500 to-yellow-500 text-zinc-900'
                         }`}
                       >
                         <div className="text-xs opacity-70 mb-1">
@@ -429,7 +429,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                   <img 
                     src={pastedImagePreview} 
                     alt="To send" 
-                    className="max-h-20 sm:max-h-24 rounded border border-gray-300"
+                    className="max-h-20 sm:max-h-24 rounded border border-zinc-600"
                   />
                   <button
                     onClick={clearPastedImage}
@@ -451,7 +451,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                 />
                 <button
                   onClick={() => chatImageInputRef.current?.click()}
-                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 active:bg-gray-400 flex-shrink-0"
+                  className="px-3 py-2 bg-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-600 active:bg-zinc-500 flex-shrink-0"
                   title="Attach image"
                 >
                   <ImageIcon className="h-5 w-5" />
@@ -463,15 +463,15 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                   onPaste={handlePaste}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                   placeholder="Type a message..."
-                  className="flex-1 min-w-0 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  className="flex-1 min-w-0 px-3 sm:px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-white placeholder-zinc-500 focus:ring-amber-500 focus:border-amber-500 text-sm"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={isSendingMessage || (!chatMessage.trim() && !pastedImage)}
                   className={`px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     isSendingMessage || (!chatMessage.trim() && !pastedImage)
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800'
+                      ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-amber-400 to-yellow-500 text-zinc-900 hover:from-amber-500 hover:to-yellow-600 active:from-amber-600 active:to-yellow-700'
                   }`}
                 >
                   {isSendingMessage ? (
@@ -481,7 +481,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                   )}
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-2 hidden sm:block">
+              <p className="text-xs text-zinc-500 mt-2 hidden sm:block">
                 💡 Tip: Paste screenshots directly from clipboard (Ctrl+V)
               </p>
             </div>
