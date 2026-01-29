@@ -532,13 +532,21 @@ router.post('/:id/messages', async (req, res) => {
 
     const addedMessage = container.messages[container.messages.length - 1];
     
-    res.status(201).json({
+    const messageData = {
       id: addedMessage._id,
       sender: addedMessage.sender,
       text: addedMessage.text,
       imageUrl: addedMessage.imageUrl,
       createdAt: addedMessage.createdAt
-    });
+    };
+
+    // Emit real-time event to all clients in the container room
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`container-${req.params.id}`).emit('new-message', messageData);
+    }
+
+    res.status(201).json(messageData);
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ error: 'Failed to send message' });

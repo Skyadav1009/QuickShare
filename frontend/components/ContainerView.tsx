@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { Container, FileMeta, Message } from '../types';
 import { updateContainerText, addFileToContainer, addFilesToContainer, addFileWithProgress, removeFileFromContainer, getFileDownloadUrl, sendMessage, uploadChatImage, getUploadedImageUrl } from '../services/storageService';
 import Button from './Button';
 import { FileText, Upload, Trash2, Download, Copy, Save, Check, RefreshCw, MessageCircle, Send, Image as ImageIcon, CloudUpload, File, FileVideo, FileAudio, FileArchive, FileCode, FileSpreadsheet, Presentation, FileType, Play, Eye } from 'lucide-react';
+
+// Socket.IO server URL (matches API_BASE without /api)
+const SOCKET_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000' 
+  : 'https://quickshare-1-9gjk.onrender.com';
 
 interface ContainerViewProps {
   container: Container;
@@ -32,12 +38,43 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatImageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   // Sync text and messages when container changes
   useEffect(() => {
     setText(container.textContent);
     setMessages(container.messages || []);
   }, [container.textContent, container.messages]);
+
+  // Socket.IO connection for real-time chat
+  useEffect(() => {
+    // Connect to socket server
+    socketRef.current = io(SOCKET_URL, {
+      transports: ['websocket', 'polling'],
+    });
+
+    // Join the container room
+    socketRef.current.emit('join-container', container.id);
+
+    // Listen for new messages
+    socketRef.current.on('new-message', (message: Message) => {
+      setMessages((prev) => {
+        // Avoid duplicate messages
+        if (prev.some((m) => m.id === message.id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.emit('leave-container', container.id);
+        socketRef.current.disconnect();
+      }
+    };
+  }, [container.id]);
 
   // Scroll to bottom of chat when new messages arrive
   useEffect(() => {

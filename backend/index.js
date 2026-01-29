@@ -3,10 +3,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const containerRoutes = require('./routes/containers');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/quickshare';
 
@@ -41,6 +44,39 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected:', socket.id);
+
+  // Join a container room for real-time updates
+  socket.on('join-container', (containerId) => {
+    socket.join(`container-${containerId}`);
+    console.log(`Socket ${socket.id} joined container-${containerId}`);
+  });
+
+  // Leave a container room
+  socket.on('leave-container', (containerId) => {
+    socket.leave(`container-${containerId}`);
+    console.log(`Socket ${socket.id} left container-${containerId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected:', socket.id);
+  });
+});
+
+// Make io accessible to routes
+app.set('io', io);
+
 // API Routes
 app.use('/api/containers', containerRoutes);
 
@@ -56,8 +92,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log('🔌 Socket.IO ready for real-time connections');
     });
   })
   .catch((error) => {
