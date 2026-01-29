@@ -6,7 +6,6 @@ import ContainerView from './components/ContainerView';
 import { createContainer, searchContainers, getContainerById, unlockContainer, getRecentContainers } from './services/storageService';
 import { Container, ContainerSummary, ViewState } from './types';
 import { Search, Plus, Lock, ArrowRight, ShieldCheck, Eye } from 'lucide-react';
-//new push
 
 const App: React.FC = () => {
   // Diagnostic message to confirm component render
