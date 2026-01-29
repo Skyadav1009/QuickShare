@@ -15,7 +15,7 @@ console.log('MongoDB URI loaded:', MONGODB_URI ? MONGODB_URI.replace(/:([^@]+)@/
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000' || 'kabada.vercel.app',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000' || 'https://kabada.vercel.app',
   credentials: true
 }));
 app.use(express.json());
