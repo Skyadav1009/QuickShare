@@ -13,13 +13,13 @@ const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props 
 }) => {
-  const baseStyle = "inline-flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  const baseStyle = "inline-flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
   
   const variants = {
-    primary: "border-transparent text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm",
-    secondary: "border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-indigo-500 shadow-sm",
+    primary: "border-transparent text-zinc-900 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 focus:ring-amber-500 shadow-sm shadow-amber-500/20",
+    secondary: "border-zinc-700 text-zinc-200 bg-zinc-800 hover:bg-zinc-700 focus:ring-amber-500 shadow-sm",
     danger: "border-transparent text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 shadow-sm",
-    ghost: "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100",
+    ghost: "border-transparent text-zinc-400 hover:text-amber-400 hover:bg-zinc-800",
   };
 
   return (
