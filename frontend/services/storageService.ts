@@ -1,8 +1,8 @@
 import { Container, ContainerSummary, FileMeta, Message } from '../types';
 
-const API_BASE = 'https://quickshare-1-9gjk.onrender.com/api';
+// const API_BASE = 'https://quickshare-1-9gjk.onrender.com/api';
 
-// const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5000/api';
 
 
 
@@ -136,6 +136,69 @@ export const addFilesToContainer = async (id: string, files: File[]): Promise<Fi
 
   const data = await response.json();
   return data.files;
+};
+
+// Chunked upload with progress for large files
+export const addFileWithProgress = async (
+  id: string, 
+  file: File, 
+  onProgress: (percent: number) => void
+): Promise<FileMeta> => {
+  const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  // For files smaller than chunk size, use regular upload
+  if (totalChunks <= 1) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_BASE}/containers/${id}/files`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || 'Upload failed');
+    }
+    onProgress(100);
+    return response.json();
+  }
+
+  // Upload chunks
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+    const start = chunkIndex * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, file.size);
+    const chunk = file.slice(start, end);
+    
+    const formData = new FormData();
+    formData.append('chunk', chunk);
+    formData.append('uploadId', uploadId);
+    formData.append('chunkIndex', chunkIndex.toString());
+    formData.append('totalChunks', totalChunks.toString());
+    formData.append('filename', file.name);
+    formData.append('fileType', file.type);
+    formData.append('fileSize', file.size.toString());
+
+    const response = await fetch(`${API_BASE}/containers/${id}/files/chunk`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Chunk upload failed' }));
+      throw new Error(error.error || 'Chunk upload failed');
+    }
+
+    const progress = Math.round(((chunkIndex + 1) / totalChunks) * 100);
+    onProgress(progress);
+
+    // Last chunk returns the file metadata
+    if (chunkIndex === totalChunks - 1) {
+      return response.json();
+    }
+  }
+
+  throw new Error('Upload incomplete');
 };
 
 // Remove file from container

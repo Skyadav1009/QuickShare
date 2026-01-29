@@ -275,6 +275,125 @@ router.post('/:id/files/multiple', (req, res) => {
   });
 });
 
+// Store for tracking chunked uploads
+const chunkUploads = new Map();
+
+// Chunked file upload endpoint
+router.post('/:id/files/chunk', upload.single('chunk'), async (req, res) => {
+  try {
+    const { uploadId, chunkIndex, totalChunks, filename, fileType, fileSize } = req.body;
+    const containerId = req.params.id;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No chunk uploaded' });
+    }
+
+    const chunkIdx = parseInt(chunkIndex);
+    const total = parseInt(totalChunks);
+    const uploadKey = `${containerId}-${uploadId}`;
+
+    // Initialize or get upload tracking
+    if (!chunkUploads.has(uploadKey)) {
+      chunkUploads.set(uploadKey, {
+        chunks: new Array(total).fill(null),
+        filename,
+        fileType,
+        fileSize: parseInt(fileSize),
+        createdAt: Date.now()
+      });
+    }
+
+    const uploadData = chunkUploads.get(uploadKey);
+    uploadData.chunks[chunkIdx] = req.file.path;
+
+    // Check if all chunks are uploaded
+    const allUploaded = uploadData.chunks.every(chunk => chunk !== null);
+
+    if (!allUploaded) {
+      return res.json({ success: true, chunkIndex: chunkIdx, received: true });
+    }
+
+    // All chunks received - combine them
+    const container = await Container.findById(containerId);
+    if (!container) {
+      // Clean up chunks
+      uploadData.chunks.forEach(chunkPath => {
+        try { fs.unlinkSync(chunkPath); } catch (e) {}
+      });
+      chunkUploads.delete(uploadKey);
+      return res.status(404).json({ error: 'Container not found' });
+    }
+
+    // Combine chunks into final file
+    const uploadDir = path.join(__dirname, '..', 'uploads');
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const finalFilename = uniqueSuffix + '-' + filename;
+    const finalPath = path.join(uploadDir, finalFilename);
+
+    const writeStream = fs.createWriteStream(finalPath);
+    
+    for (const chunkPath of uploadData.chunks) {
+      const chunkData = fs.readFileSync(chunkPath);
+      writeStream.write(chunkData);
+      // Delete chunk after reading
+      fs.unlinkSync(chunkPath);
+    }
+    
+    writeStream.end();
+    
+    // Wait for write to complete
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
+
+    // Clean up tracking
+    chunkUploads.delete(uploadKey);
+
+    // Add file to container
+    const fileData = {
+      filename: finalFilename,
+      originalName: filename,
+      mimetype: fileType || 'application/octet-stream',
+      size: uploadData.fileSize,
+      path: finalPath
+    };
+
+    container.files.push(fileData);
+    container.lastAccessed = new Date();
+    await container.save();
+
+    const addedFile = container.files[container.files.length - 1];
+
+    res.status(201).json({
+      id: addedFile._id,
+      name: addedFile.originalName,
+      type: addedFile.mimetype,
+      size: addedFile.size,
+      createdAt: addedFile.createdAt
+    });
+
+  } catch (error) {
+    console.error('Chunk upload error:', error);
+    res.status(500).json({ error: 'Failed to upload chunk' });
+  }
+});
+
+// Clean up stale chunk uploads (older than 1 hour)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, data] of chunkUploads.entries()) {
+    if (now - data.createdAt > 60 * 60 * 1000) {
+      data.chunks.forEach(chunkPath => {
+        if (chunkPath) {
+          try { fs.unlinkSync(chunkPath); } catch (e) {}
+        }
+      });
+      chunkUploads.delete(key);
+    }
+  }
+}, 10 * 60 * 1000); // Run every 10 minutes
+
 // Download file from container
 router.get('/:id/files/:fileId/download', async (req, res) => {
   try {

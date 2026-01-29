@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, FileMeta, Message } from '../types';
-import { updateContainerText, addFileToContainer, addFilesToContainer, removeFileFromContainer, getFileDownloadUrl, sendMessage, uploadChatImage, getUploadedImageUrl } from '../services/storageService';
+import { updateContainerText, addFileToContainer, addFilesToContainer, addFileWithProgress, removeFileFromContainer, getFileDownloadUrl, sendMessage, uploadChatImage, getUploadedImageUrl } from '../services/storageService';
 import Button from './Button';
-import { FileText, Upload, Trash2, Download, Copy, Save, Check, RefreshCw, MessageCircle, Send, Image as ImageIcon, CloudUpload } from 'lucide-react';
+import { FileText, Upload, Trash2, Download, Copy, Save, Check, RefreshCw, MessageCircle, Send, Image as ImageIcon, CloudUpload, File, FileVideo, FileAudio, FileArchive, FileCode, FileSpreadsheet, Presentation, FileType, Play, Eye } from 'lucide-react';
 
 interface ContainerViewProps {
   container: Container;
@@ -17,7 +17,9 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
   const [textSaved, setTextSaved] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [uploadPercent, setUploadPercent] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [previewFile, setPreviewFile] = useState<FileMeta | null>(null);
   
   // Chat states
   const [messages, setMessages] = useState<Message[]>(container.messages || []);
@@ -59,7 +61,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files);
+      const files: File[] = Array.from(e.target.files);
       await uploadFiles(files);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -67,12 +69,26 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
 
   const uploadFiles = async (files: File[]) => {
     setIsUploading(true);
-    setUploadProgress(`Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`);
+    setUploadPercent(0);
+    const totalFiles = files.length;
+    let completedFiles = 0;
+
     try {
-      if (files.length === 1) {
-        await addFileToContainer(container.id, files[0]);
-      } else {
-        await addFilesToContainer(container.id, files);
+      for (const file of files) {
+        setUploadProgress(`Uploading ${file.name} (${completedFiles + 1}/${totalFiles})...`);
+        
+        // Use chunked upload for files > 5MB
+        if (file.size > 5 * 1024 * 1024) {
+          await addFileWithProgress(container.id, file, (percent) => {
+            const overallPercent = ((completedFiles + percent / 100) / totalFiles) * 100;
+            setUploadPercent(Math.round(overallPercent));
+          });
+        } else {
+          await addFileToContainer(container.id, file);
+          completedFiles++;
+          setUploadPercent(Math.round((completedFiles / totalFiles) * 100));
+        }
+        completedFiles++;
       }
       refreshContainer();
     } catch (error: any) {
@@ -80,7 +96,76 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
     } finally {
       setIsUploading(false);
       setUploadProgress('');
+      setUploadPercent(0);
     }
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (file: FileMeta) => {
+    const type = file.type.toLowerCase();
+    const name = file.name.toLowerCase();
+    
+    // Images
+    if (type.startsWith('image/')) return null; // Will show thumbnail
+    
+    // Videos
+    if (type.startsWith('video/') || ['.mp4', '.avi', '.mov', '.mkv', '.webm'].some(ext => name.endsWith(ext))) {
+      return <FileVideo className="h-8 w-8 text-purple-400" />;
+    }
+    
+    // Audio
+    if (type.startsWith('audio/') || ['.mp3', '.wav', '.flac', '.aac', '.ogg'].some(ext => name.endsWith(ext))) {
+      return <FileAudio className="h-8 w-8 text-pink-400" />;
+    }
+    
+    // PDF
+    if (type === 'application/pdf' || name.endsWith('.pdf')) {
+      return <FileType className="h-8 w-8 text-red-400" />;
+    }
+    
+    // Word documents
+    if (type.includes('word') || ['.doc', '.docx', '.odt'].some(ext => name.endsWith(ext))) {
+      return <FileText className="h-8 w-8 text-blue-400" />;
+    }
+    
+    // Excel/Spreadsheets
+    if (type.includes('sheet') || type.includes('excel') || ['.xls', '.xlsx', '.csv'].some(ext => name.endsWith(ext))) {
+      return <FileSpreadsheet className="h-8 w-8 text-green-400" />;
+    }
+    
+    // PowerPoint
+    if (type.includes('presentation') || ['.ppt', '.pptx'].some(ext => name.endsWith(ext))) {
+      return <Presentation className="h-8 w-8 text-orange-400" />;
+    }
+    
+    // Archives
+    if (['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2'].some(ext => name.endsWith(ext))) {
+      return <FileArchive className="h-8 w-8 text-yellow-400" />;
+    }
+    
+    // Code files
+    if (['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.cpp', '.c', '.html', '.css', '.json', '.xml', '.yml', '.yaml', '.md'].some(ext => name.endsWith(ext))) {
+      return <FileCode className="h-8 w-8 text-cyan-400" />;
+    }
+    
+    // APK/Apps
+    if (['.apk', '.exe', '.dmg', '.msi', '.deb', '.rpm'].some(ext => name.endsWith(ext))) {
+      return <Play className="h-8 w-8 text-green-500" />;
+    }
+    
+    // Default
+    return <File className="h-8 w-8 text-zinc-400" />;
+  };
+
+  // Check if file can be previewed
+  const canPreview = (file: FileMeta) => {
+    const type = file.type.toLowerCase();
+    const name = file.name.toLowerCase();
+    return type.startsWith('image/') || 
+           type.startsWith('video/') || 
+           type.startsWith('audio/') ||
+           type === 'application/pdf' ||
+           ['.mp4', '.webm', '.mp3', '.wav', '.pdf'].some(ext => name.endsWith(ext));
   };
 
   // Drag and drop handlers
@@ -110,7 +195,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
 
     if (activeTab !== 'files') return;
 
-    const droppedFiles = Array.from(e.dataTransfer.files);
+    const droppedFiles: File[] = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
       await uploadFiles(droppedFiles);
     }
@@ -209,6 +294,14 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
     return file.type.startsWith('image/');
   };
 
+  // Format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <div className="bg-zinc-900 rounded-lg shadow-xl shadow-black/30 border border-zinc-800 overflow-hidden min-h-[500px] sm:min-h-[600px] flex flex-col">
@@ -289,7 +382,16 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                 <div>
                   <h3 className="text-base sm:text-lg font-medium text-white">Stored Files</h3>
                   {uploadProgress && (
-                    <p className="text-xs text-amber-400 mt-1">{uploadProgress}</p>
+                    <div className="mt-2">
+                      <p className="text-xs text-amber-400 mb-1">{uploadProgress}</p>
+                      <div className="w-48 bg-zinc-700 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-amber-400 to-yellow-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadPercent}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-500 mt-1">{uploadPercent}% complete</p>
+                    </div>
                   )}
                 </div>
                 <div className="relative">
@@ -330,50 +432,56 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
                   </p>
                 </div>
               ) : (
-                <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {container.files.map((file) => (
-                    <li key={file.id} className="col-span-1 bg-zinc-900 rounded-lg shadow border border-zinc-800 divide-y divide-zinc-800">
-                      <div className="w-full flex items-center justify-between p-4 sm:p-6 space-x-4 sm:space-x-6">
-                        <div className="flex-1 truncate min-w-0">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="text-white text-xs sm:text-sm font-medium truncate" title={file.name}>{file.name}</h3>
-                          </div>
-                          <p className="mt-1 text-zinc-400 text-xs truncate">{(file.size / 1024).toFixed(1)} KB</p>
-                          <p className="text-zinc-500 text-xs">{new Date(file.createdAt).toLocaleTimeString()}</p>
-                        </div>
+                    <li key={file.id} className="col-span-1 bg-zinc-800 rounded-lg shadow border border-zinc-700 hover:border-amber-500/50 transition-colors overflow-hidden group">
+                      {/* Thumbnail/Icon Area */}
+                      <div 
+                        className="relative aspect-square bg-zinc-900 flex items-center justify-center cursor-pointer"
+                        onClick={() => canPreview(file) && setPreviewFile(file)}
+                      >
                         {isImageFile(file) ? (
-                          <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden">
-                            <img 
-                              src={getFileDownloadUrl(container.id, file.id)} 
-                              alt={file.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                          <img 
+                            src={getFileDownloadUrl(container.id, file.id)} 
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <div className="bg-amber-500/20 p-2 rounded-full flex-shrink-0">
-                            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
+                          <div className="flex flex-col items-center justify-center p-4">
+                            {getFileIcon(file)}
+                            <span className="mt-2 text-xs text-zinc-500 uppercase font-medium">
+                              {file.name.split('.').pop()}
+                            </span>
+                          </div>
+                        )}
+                        {/* Preview overlay for previewable files */}
+                        {canPreview(file) && (
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Eye className="h-8 w-8 text-white" />
                           </div>
                         )}
                       </div>
-                      <div className="-mt-px flex divide-x divide-zinc-800">
-                        <div className="w-0 flex-1 flex">
-                          <button
-                            onClick={() => handleDownload(file)}
-                            className="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-3 sm:py-4 text-xs sm:text-sm text-zinc-300 font-medium border border-transparent rounded-bl-lg hover:text-amber-400 active:bg-zinc-800"
-                          >
-                            <Download className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" aria-hidden="true" />
-                            <span className="ml-2 sm:ml-3">Download</span>
-                          </button>
-                        </div>
-                        <div className="-ml-px w-0 flex-1 flex">
-                          <button
-                            onClick={() => handleRemoveFile(file.id)}
-                            className="relative w-0 flex-1 inline-flex items-center justify-center py-3 sm:py-4 text-xs sm:text-sm text-red-400 font-medium border border-transparent rounded-br-lg hover:text-red-300 active:bg-zinc-800"
-                          >
-                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" aria-hidden="true" />
-                            <span className="ml-2 sm:ml-3">Delete</span>
-                          </button>
-                        </div>
+                      {/* File info */}
+                      <div className="p-3">
+                        <h3 className="text-white text-xs font-medium truncate" title={file.name}>{file.name}</h3>
+                        <p className="text-zinc-500 text-xs mt-1">{formatFileSize(file.size)}</p>
+                      </div>
+                      {/* Actions */}
+                      <div className="flex border-t border-zinc-700">
+                        <button
+                          onClick={() => handleDownload(file)}
+                          className="flex-1 py-2 text-xs text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Download className="w-3 h-3" />
+                          Download
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFile(file.id)}
+                          className="flex-1 py-2 text-xs text-zinc-400 hover:text-red-400 hover:bg-zinc-700/50 transition-colors flex items-center justify-center gap-1 border-l border-zinc-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </button>
                       </div>
                     </li>
                   ))}
@@ -575,6 +683,78 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
           )}
         </div>
       </div>
+
+      {/* File Preview Modal */}
+      {previewFile && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setPreviewFile(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full" onClick={(e) => e.stopPropagation()}>
+            {/* Close button */}
+            <button
+              onClick={() => setPreviewFile(null)}
+              className="absolute -top-12 right-0 text-white hover:text-amber-400 text-xl font-bold"
+            >
+              ✕ Close
+            </button>
+            
+            {/* Preview content */}
+            <div className="bg-zinc-900 rounded-lg overflow-hidden">
+              {isImageFile(previewFile) && (
+                <img 
+                  src={getFileDownloadUrl(container.id, previewFile.id)} 
+                  alt={previewFile.name}
+                  className="max-w-full max-h-[80vh] mx-auto"
+                />
+              )}
+              
+              {previewFile.type.startsWith('video/') && (
+                <video 
+                  src={getFileDownloadUrl(container.id, previewFile.id)}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[80vh] mx-auto"
+                />
+              )}
+              
+              {previewFile.type.startsWith('audio/') && (
+                <div className="p-8 flex flex-col items-center">
+                  <FileAudio className="h-24 w-24 text-pink-400 mb-4" />
+                  <p className="text-white mb-4">{previewFile.name}</p>
+                  <audio 
+                    src={getFileDownloadUrl(container.id, previewFile.id)}
+                    controls
+                    autoPlay
+                    className="w-full max-w-md"
+                  />
+                </div>
+              )}
+              
+              {previewFile.type === 'application/pdf' && (
+                <iframe 
+                  src={getFileDownloadUrl(container.id, previewFile.id)}
+                  className="w-full h-[80vh]"
+                  title={previewFile.name}
+                />
+              )}
+            </div>
+            
+            {/* File info */}
+            <div className="mt-4 text-center">
+              <p className="text-white font-medium">{previewFile.name}</p>
+              <p className="text-zinc-400 text-sm">{formatFileSize(previewFile.size)}</p>
+              <button
+                onClick={() => handleDownload(previewFile)}
+                className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-400 to-yellow-500 text-zinc-900 rounded-lg hover:from-amber-500 hover:to-yellow-600 inline-flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
