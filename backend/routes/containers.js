@@ -38,7 +38,7 @@ const uploadMultiple = multer({
 // Create a new container
 router.post('/', async (req, res) => {
   try {
-    const { name, password } = req.body;
+    const { name, password, maxViews } = req.body;
 
     if (!name || !password) {
       return res.status(400).json({ error: 'Name and password are required' });
@@ -55,7 +55,8 @@ router.post('/', async (req, res) => {
 
     const container = new Container({
       name,
-      passwordHash: password // Will be hashed by pre-save middleware
+      passwordHash: password, // Will be hashed by pre-save middleware
+      maxViews: maxViews ? parseInt(maxViews, 10) : 0 // 0 = unlimited
     });
 
     await container.save();
@@ -118,9 +119,34 @@ router.post('/:id/verify', async (req, res) => {
       return res.status(401).json({ error: 'Incorrect password' });
     }
 
-    // Update last accessed
+    // Increment view count
+    container.currentViews += 1;
     container.lastAccessed = new Date();
     await container.save();
+
+    // Check if view limit reached (maxViews > 0 means limited views)
+    if (container.maxViews > 0 && container.currentViews >= container.maxViews) {
+      // Delete container files from disk
+      const fs = require('fs');
+      const path = require('path');
+      for (const file of container.files) {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (e) {
+          console.error('Error deleting file:', e);
+        }
+      }
+      
+      // Return the container data before deleting
+      const safeData = container.toSafeObject();
+      safeData.deleted = true;
+      safeData.message = 'This container has reached its view limit and will be deleted.';
+      
+      // Delete container from database
+      await Container.findByIdAndDelete(req.params.id);
+      
+      return res.json(safeData);
+    }
 
     res.json(container.toSafeObject());
   } catch (error) {

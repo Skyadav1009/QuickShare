@@ -1,8 +1,8 @@
 import { Container, ContainerSummary, FileMeta, Message } from '../types';
 
-const API_BASE = 'https://quickshare-1-9gjk.onrender.com/api';
+// const API_BASE = 'https://quickshare-1-9gjk.onrender.com/api';
 
-// const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5000/api';
 
 
 
@@ -31,10 +31,10 @@ async function apiRequest<T>(
 }
 
 // Create a new container
-export const createContainer = async (name: string, password: string): Promise<Container> => {
+export const createContainer = async (name: string, password: string, maxViews?: number): Promise<Container> => {
   const data = await apiRequest<Container>('/containers', {
     method: 'POST',
-    body: JSON.stringify({ name, password }),
+    body: JSON.stringify({ name, password, maxViews: maxViews || 0 }),
   });
   
   return data;

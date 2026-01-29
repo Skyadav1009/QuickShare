@@ -5,7 +5,7 @@ import Button from './components/Button';
 import ContainerView from './components/ContainerView';
 import { createContainer, searchContainers, getContainerById, unlockContainer, getRecentContainers } from './services/storageService';
 import { Container, ContainerSummary, ViewState } from './types';
-import { Search, Plus, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Search, Plus, Lock, ArrowRight, ShieldCheck, Eye } from 'lucide-react';
 
 const App: React.FC = () => {
   // Diagnostic message to confirm component render
@@ -25,6 +25,7 @@ const App: React.FC = () => {
   // Form States
   const [createName, setCreateName] = useState('');
   const [createPassword, setCreatePassword] = useState('');
+  const [createMaxViews, setCreateMaxViews] = useState('');
   const [unlockPassword, setUnlockPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -69,11 +70,13 @@ const App: React.FC = () => {
       return;
     }
     try {
-      const newContainer = await createContainer(createName, createPassword);
+      const maxViews = createMaxViews ? parseInt(createMaxViews, 10) : 0;
+      const newContainer = await createContainer(createName, createPassword, maxViews);
       setActiveContainer(newContainer);
       setViewState(ViewState.CONTAINER);
       setCreateName('');
       setCreatePassword('');
+      setCreateMaxViews('');
     } catch (err: any) {
       setErrorMsg(err.message);
     }
@@ -170,7 +173,7 @@ const App: React.FC = () => {
                       <div 
                         key={container.id} 
                         onClick={() => openUnlockScreen(container.id)}
-                        className="bg-zinc-900 p-4 sm:p-6 rounded-lg shadow-sm border border-zinc-800 hover:shadow-lg hover:shadow-amber-500/10 hover:border-amber-500/50 transition-all cursor-pointer group active:bg-zinc-800"
+                        className="bg-zinc-900 p-4 sm:p-6 rounded-lg shadow-sm border border-zinc-800 hover:shadow-lg hover:shadow-amber-500/10 hover:border-amber-500/50 transition-all cursor-pointer group active:bg-zinc-800 relative"
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex items-center min-w-0 flex-1">
@@ -197,6 +200,15 @@ const App: React.FC = () => {
                            <span className="hidden sm:inline">•</span>
                            <span>{container.hasText ? 'Has Text' : 'No Text'}</span>
                         </div>
+                        {/* Views counter in bottom-right */}
+                        {container.maxViews > 0 && (
+                          <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-full text-xs border border-amber-500/30">
+                            <Eye className="h-3 w-3 text-amber-400" />
+                            <span className="text-amber-400 font-medium">
+                              {container.currentViews}/{container.maxViews}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ))}
                  </div>
@@ -226,7 +238,7 @@ const App: React.FC = () => {
                         <div 
                           key={container.id} 
                           onClick={() => openUnlockScreen(container.id)}
-                          className="bg-zinc-900 p-4 sm:p-6 rounded-lg shadow-sm border border-zinc-800 hover:shadow-lg hover:shadow-amber-500/10 hover:border-amber-500/50 transition-all cursor-pointer group active:bg-zinc-800"
+                          className="bg-zinc-900 p-4 sm:p-6 rounded-lg shadow-sm border border-zinc-800 hover:shadow-lg hover:shadow-amber-500/10 hover:border-amber-500/50 transition-all cursor-pointer group active:bg-zinc-800 relative"
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex items-center min-w-0 flex-1">
@@ -253,6 +265,15 @@ const App: React.FC = () => {
                             <span className="hidden sm:inline">•</span>
                             <span>{container.hasText ? 'Has Text' : 'No Text'}</span>
                           </div>
+                          {/* Views counter in bottom-right */}
+                          {container.maxViews > 0 && (
+                            <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-amber-500/20 px-2 py-1 rounded-full text-xs border border-amber-500/30">
+                              <Eye className="h-3 w-3 text-amber-400" />
+                              <span className="text-amber-400 font-medium">
+                                {container.currentViews}/{container.maxViews}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -302,6 +323,21 @@ const App: React.FC = () => {
                           placeholder="••••••••"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-300">View Limit (Optional)</label>
+                      <div className="mt-1">
+                        <input
+                          type="number"
+                          min="0"
+                          value={createMaxViews}
+                          onChange={(e) => setCreateMaxViews(e.target.value)}
+                          className="appearance-none block w-full px-3 py-2 border border-zinc-700 rounded-md shadow-sm bg-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                          placeholder="0 = Unlimited views"
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-500 mt-1">Container will be deleted after this many views. Leave empty or 0 for unlimited.</p>
                     </div>
 
                     {errorMsg && (

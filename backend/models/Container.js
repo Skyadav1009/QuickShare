@@ -38,6 +38,14 @@ const containerSchema = new mongoose.Schema({
   },
   files: [fileSchema],
   messages: [messageSchema],
+  maxViews: {
+    type: Number,
+    default: 0 // 0 means unlimited views
+  },
+  currentViews: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -87,6 +95,8 @@ containerSchema.methods.toSafeObject = function() {
       imageUrl: m.imageUrl,
       createdAt: m.createdAt
     })),
+    maxViews: this.maxViews,
+    currentViews: this.currentViews,
     createdAt: this.createdAt,
     lastAccessed: this.lastAccessed
   };
@@ -99,6 +109,8 @@ containerSchema.methods.toSummary = function() {
     name: this.name,
     fileCount: this.files.length,
     hasText: !!this.textContent,
+    maxViews: this.maxViews,
+    currentViews: this.currentViews,
     createdAt: this.createdAt
   };
 };

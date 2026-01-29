@@ -22,6 +22,10 @@ export interface Container {
   files: FileMeta[];
   messages: Message[];
   textContent: string;
+  maxViews: number;
+  currentViews: number;
+  deleted?: boolean;
+  message?: string;
   createdAt: number;
   lastAccessed: number;
 }
@@ -31,6 +35,8 @@ export interface ContainerSummary {
   name: string;
   fileCount: number;
   hasText: boolean;
+  maxViews: number;
+  currentViews: number;
   createdAt: number;
 }
 
