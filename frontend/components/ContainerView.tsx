@@ -8,7 +8,7 @@ import ShareModal from './ShareModal';
 import { FileText, Upload, Trash2, Download, Copy, Save, Check, RefreshCw, MessageCircle, Send, Image as ImageIcon, CloudUpload, File, FileVideo, FileAudio, FileArchive, FileCode, FileSpreadsheet, Presentation, FileType, Play, Eye, Share2, FolderDown, Search, Plus } from 'lucide-react';
 
 // Socket.IO server URL (matches API_BASE without /api)
-const SOCKET_URL = 'https://quickshare-1-9gjk.onrender.com';
+const SOCKET_URL = (import.meta as any).env.VITE_API_URL ? (import.meta as any).env.VITE_API_URL.replace('/api', '') : 'https://quickshare-1-9gjk.onrender.com';
 
 interface ContainerViewProps {
   container: Container;
@@ -357,7 +357,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, refreshContain
 
   const handleDownload = (file: FileMeta) => {
     // Use the API download URL
-    const downloadUrl = getFileDownloadUrl(container.id, file.id);
+    const downloadUrl = getFileDownloadUrl(container.id, file.id, true);
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = file.name;

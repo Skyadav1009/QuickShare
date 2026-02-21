@@ -1,6 +1,6 @@
 import { Container, ContainerSummary, FileMeta, Message, Clipboard } from '../types';
 
-const API_BASE = 'https://quickshare-1-9gjk.onrender.com/api';
+const API_BASE = (import.meta as any).env.VITE_API_URL || 'https://quickshare-1-9gjk.onrender.com/api';
 
 
 
@@ -242,8 +242,8 @@ export const removeFileFromContainer = async (containerId: string, fileId: strin
 };
 
 // Get download URL for a file
-export const getFileDownloadUrl = (containerId: string, fileId: string): string => {
-  return `${API_BASE}/containers/${containerId}/files/${fileId}/download`;
+export const getFileDownloadUrl = (containerId: string, fileId: string, download: boolean = false): string => {
+  return `${API_BASE}/containers/${containerId}/files/${fileId}/download${download ? '?download=1' : ''}`;
 };
 
 // Get download-all ZIP URL

@@ -580,9 +580,29 @@ router.get('/:id/files/:fileId/download', async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    // For Cloudinary files, redirect to the Cloudinary URL
+    // For Cloudinary files, proxy the file to enforce correct filename and extension
     if (file.path.startsWith('http')) {
-      return res.redirect(file.path);
+      const fetchAndPipe = (url) => {
+        const protocol = url.startsWith('https') ? require('https') : require('http');
+        protocol.get(url, (response) => {
+          if (response.statusCode === 301 || response.statusCode === 302) {
+            // Follow redirect
+            fetchAndPipe(response.headers.location);
+          } else {
+            // Set headers to force download with ORIGINAL filename and format
+            const disposition = req.query.download === '1' ? 'attachment' : 'inline';
+            res.setHeader('Content-Disposition', `${disposition}; filename="${file.originalName}"`);
+            res.setHeader('Content-Type', file.mimetype || 'application/octet-stream');
+            response.pipe(res);
+          }
+        }).on('error', (err) => {
+          console.error('Error proxying file from Cloudinary:', err);
+          if (!res.headersSent) res.status(500).json({ error: 'Failed to download file' });
+        });
+      };
+
+      fetchAndPipe(file.path);
+      return;
     }
 
     // Fallback for old local files
