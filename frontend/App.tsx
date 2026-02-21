@@ -7,7 +7,6 @@ import { useToast } from './components/Toast';
 import { createContainer, searchContainers, getContainerById, unlockContainer, getRecentContainers } from './services/storageService';
 import { Container, ContainerSummary, ViewState } from './types';
 import { Search, Plus, Lock, ArrowRight, ShieldCheck, Eye } from 'lucide-react';
-// check
 const App: React.FC = () => {
   const toast = useToast();
   // Diagnostic message to confirm component render
