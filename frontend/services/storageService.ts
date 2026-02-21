@@ -1,6 +1,6 @@
 import { Container, ContainerSummary, FileMeta, Message, Clipboard } from '../types';
 
-const API_BASE = (import.meta as any).env.VITE_API_URL || 'https://quickshare-1-9gjk.onrender.com/api';
+const API_BASE = 'https://quickshare-1-9gjk.onrender.com/api';
 
 
 
