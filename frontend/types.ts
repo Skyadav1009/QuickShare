@@ -37,6 +37,7 @@ export interface Container {
   isAdmin?: boolean;
   deleted?: boolean;
   message?: string;
+  webhookUrl?: string;
   createdAt: number;
   lastAccessed: number;
 }

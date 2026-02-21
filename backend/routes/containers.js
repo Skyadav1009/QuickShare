@@ -10,6 +10,45 @@ const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const Container = require('../models/Container');
 
+// Helper to send Discord webhook
+const sendDiscordWebhook = (webhookUrl, container, files) => {
+  if (!webhookUrl) return;
+  try {
+    const proto = webhookUrl.startsWith('https') ? https : http;
+    const filesList = files.slice(0, 10).map(f => `- **${f.originalName}** (${(f.size / 1024 / 1024).toFixed(2)} MB)`).join('\\n');
+    const overLimit = files.length > 10 ? `\\n*...and ${files.length - 10} more*` : '';
+
+    const payload = JSON.stringify({
+      embeds: [{
+        title: `📤 New File Upload (${files.length})`,
+        description: `New files have been uploaded to **${container.name}**.\\n\\n${filesList}${overLimit}`,
+        color: 15309328 // Amber color
+      }]
+    });
+
+    const url = new URL(webhookUrl);
+    const options = {
+      hostname: url.hostname,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      path: url.pathname + url.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    };
+
+    const req = proto.request(options, (res) => {
+      res.on('data', () => { });
+    });
+    req.on('error', (e) => console.error('Webhook error:', e.message));
+    req.write(payload);
+    req.end();
+  } catch (err) {
+    console.error('Failed to parse or send webhook:', err.message);
+  }
+};
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -165,6 +204,11 @@ router.post('/:id/verify', async (req, res) => {
     const safeContainer = container.toSafeObject();
     safeContainer.isAdmin = isAdmin;
 
+    // Attach webhookUrl if user has access
+    if (isAdmin || !container.readOnly) {
+      safeContainer.webhookUrl = container.webhookUrl || '';
+    }
+
     // Increment view count
     container.currentViews += 1;
     container.lastAccessed = new Date();
@@ -217,7 +261,22 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Container not found' });
     }
 
-    res.json(container.toSafeObject());
+    const safeContainer = container.toSafeObject();
+    const adminPassword = req.headers['x-admin-password'];
+
+    let isAdmin = false;
+    if (container.readOnly && adminPassword) {
+      isAdmin = await container.verifyAdminPassword(adminPassword);
+    } else if (!container.readOnly) {
+      isAdmin = true;
+    }
+
+    safeContainer.isAdmin = isAdmin;
+    if (isAdmin) {
+      safeContainer.webhookUrl = container.webhookUrl || '';
+    }
+
+    res.json(safeContainer);
   } catch (error) {
     console.error('Get container error:', error);
     res.status(500).json({ error: 'Failed to get container' });
@@ -242,6 +301,33 @@ router.put('/:id/text', async (req, res) => {
   } catch (error) {
     console.error('Update text error:', error);
     res.status(500).json({ error: 'Failed to update text' });
+  }
+});
+
+// Update webhook URL
+router.put('/:id/webhook', async (req, res) => {
+  try {
+    const { webhookUrl } = req.body;
+    const adminPassword = req.headers['x-admin-password'];
+    const container = await Container.findById(req.params.id);
+
+    if (!container) return res.status(404).json({ error: 'Container not found' });
+
+    // Ensure authorized
+    if (container.readOnly) {
+      const isAdmin = await container.verifyAdminPassword(adminPassword);
+      if (!isAdmin) {
+        return res.status(403).json({ error: 'Admin access required to modify webhook.' });
+      }
+    }
+
+    container.webhookUrl = webhookUrl || '';
+    await container.save();
+
+    res.json({ success: true, webhookUrl: container.webhookUrl });
+  } catch (error) {
+    console.error('Update webhook error:', error);
+    res.status(500).json({ error: 'Failed to update webhook' });
   }
 });
 
@@ -435,6 +521,9 @@ router.post('/:id/files', upload.single('file'), async (req, res) => {
       size: addedFile.size,
       createdAt: addedFile.createdAt
     });
+
+    // Trigger webhook if active
+    sendDiscordWebhook(container.webhookUrl, container, [addedFile]);
   } catch (error) {
     console.error('File upload error:', error);
     if (req.file && req.file.filename) {
@@ -513,6 +602,9 @@ router.post('/:id/files/multiple', (req, res) => {
           createdAt: f.createdAt
         }))
       });
+
+      // Trigger webhook if active
+      sendDiscordWebhook(container.webhookUrl, container, addedFiles);
     } catch (error) {
       console.error('Multiple file upload error:', error);
       if (req.files && req.files.length > 0) {
@@ -638,6 +730,9 @@ router.post('/:id/files/chunk', upload.single('chunk'), async (req, res) => {
       size: addedFile.size,
       createdAt: addedFile.createdAt
     });
+
+    // Trigger webhook if active
+    sendDiscordWebhook(container.webhookUrl, container, [addedFile]);
 
   } catch (error) {
     console.error('Chunk upload error:', error);

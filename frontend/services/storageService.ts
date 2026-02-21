@@ -1,7 +1,6 @@
 import { Container, ContainerSummary, FileMeta, Message, Clipboard } from '../types';
 
-const API_BASE = 'https://quickshare-1-9gjk.onrender.com/api';
-//const API_BASE = 'http://localhost:5000/api';
+const API_BASE = (import.meta as any).env.VITE_API_URL || 'http://localhost:5000/api';
 
 
 
@@ -82,9 +81,12 @@ export const verifyPassword = async (id: string, password: string): Promise<bool
 };
 
 // Get container by ID (after password verification)
-export const getContainerById = async (id: string): Promise<Container | null> => {
+export const getContainerById = async (id: string, adminPassword?: string): Promise<Container | null> => {
   try {
-    const data = await apiRequest<Container>(`/containers/${id}`);
+    const headers: Record<string, string> = {};
+    if (adminPassword) headers['x-admin-password'] = adminPassword;
+
+    const data = await apiRequest<Container>(`/containers/${id}`, { headers });
     return data;
   } catch {
     return null;
@@ -110,6 +112,19 @@ export const updateContainerText = async (id: string, text: string): Promise<voi
     method: 'PUT',
     body: JSON.stringify({ text }),
   });
+};
+
+// Update Webhook URL
+export const updateWebhookUrl = async (id: string, webhookUrl: string, adminPassword?: string): Promise<{ success: boolean; webhookUrl: string }> => {
+  const headers: Record<string, string> = {};
+  if (adminPassword) headers['x-admin-password'] = adminPassword;
+
+  const data = await apiRequest<{ success: boolean; webhookUrl: string }>(`/containers/${id}/webhook`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ webhookUrl }),
+  });
+  return data;
 };
 
 // Clipboard APIs

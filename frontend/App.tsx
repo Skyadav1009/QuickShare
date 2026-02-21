@@ -155,8 +155,9 @@ const App: React.FC = () => {
 
   const refreshActiveContainer = async () => {
     if (activeContainer) {
-      const updated = await getContainerById(activeContainer.id);
-      if (activeContainer.isAdmin) {
+      const adminPass = sessionStorage.getItem(`admin-pass-${activeContainer.id}`) || undefined;
+      const updated = await getContainerById(activeContainer.id, adminPass);
+      if (updated && activeContainer.isAdmin) {
         updated.isAdmin = true;
       }
       setActiveContainer(updated);

@@ -5,7 +5,8 @@ import { updateContainerText, addFileToContainer, addFilesToContainer, addFileWi
 import Button from './Button';
 import { useToast } from './Toast';
 import ShareModal from './ShareModal';
-import { FileText, Upload, Trash2, Download, Copy, Save, Check, RefreshCw, MessageCircle, Send, Image as ImageIcon, CloudUpload, File, FileVideo, FileAudio, FileArchive, FileCode, FileSpreadsheet, Presentation, FileType, Play, Eye, Share2, FolderDown, Search, Plus } from 'lucide-react';
+import SettingsModal from './SettingsModal';
+import { FileText, Upload, Trash2, Download, Copy, Save, Check, RefreshCw, MessageCircle, Send, Image as ImageIcon, CloudUpload, File, FileVideo, FileAudio, FileArchive, FileCode, FileSpreadsheet, Presentation, FileType, Play, Eye, Share2, FolderDown, Search, Plus, Settings } from 'lucide-react';
 
 // Socket.IO server URL (matches API_BASE without /api)
 const SOCKET_URL = (import.meta as any).env.VITE_API_URL ? (import.meta as any).env.VITE_API_URL.replace('/api', '') : 'https://quickshare-1-9gjk.onrender.com';
@@ -36,6 +37,7 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, adminPassword,
   const [isDragging, setIsDragging] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileMeta | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [textCopied, setTextCopied] = useState(false);
 
   // Chat states
@@ -479,6 +481,16 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, adminPassword,
             </p>
           </div>
           <div className="flex items-center gap-2 ml-2">
+            {hasWriteAccess && (
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium bg-zinc-900/20 text-zinc-900 hover:bg-zinc-900/30 border border-zinc-900/20 transition-colors"
+                title="Container Settings"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </button>
+            )}
             <button
               onClick={() => setShowShareModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium bg-zinc-900/20 text-zinc-900 hover:bg-zinc-900/30 border border-zinc-900/20 transition-colors"
@@ -1047,6 +1059,18 @@ const ContainerView: React.FC<ContainerViewProps> = ({ container, adminPassword,
           containerId={container.id}
           containerName={container.name}
           onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <SettingsModal
+          containerId={container.id}
+          containerName={container.name}
+          currentWebhookUrl={container.webhookUrl || ''}
+          adminPassword={adminPassword}
+          onClose={() => setShowSettingsModal(false)}
+          onRefresh={refreshContainer}
         />
       )}
     </div>

@@ -64,6 +64,10 @@ const containerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  webhookUrl: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now
