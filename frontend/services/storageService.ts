@@ -371,3 +371,24 @@ export const getUploadedImageUrl = (imageUrl: string): string => {
   const baseUrl = API_BASE.replace('/api', '');
   return `${baseUrl}${imageUrl}`;
 };
+
+// --- SUPER ADMIN APIs ---
+export const adminLogin = async (username: string, password: string): Promise<{ success: boolean; token: string }> => {
+  return await apiRequest<{ success: boolean; token: string }>('/admin/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
+};
+
+export const getAdminContainers = async (token: string): Promise<ContainerSummary[]> => {
+  return await apiRequest<ContainerSummary[]>('/admin/containers', {
+    headers: { 'x-super-admin-token': token }
+  });
+};
+
+export const deleteContainerAdmin = async (id: string, token: string): Promise<{ success: boolean }> => {
+  return await apiRequest<{ success: boolean }>(`/admin/containers/${id}`, {
+    method: 'DELETE',
+    headers: { 'x-super-admin-token': token }
+  });
+};

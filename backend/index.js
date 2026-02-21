@@ -7,6 +7,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const containerRoutes = require('./routes/containers');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const server = http.createServer(app);
@@ -82,6 +83,7 @@ app.set('io', io);
 
 // API Routes
 app.use('/api/containers', containerRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

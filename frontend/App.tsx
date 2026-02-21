@@ -5,8 +5,10 @@ import Button from './components/Button';
 import ContainerView from './components/ContainerView';
 import { useToast } from './components/Toast';
 import { createContainer, searchContainers, getContainerById, unlockContainer, getRecentContainers } from './services/storageService';
+import AdminLogin from './components/AdminLogin';
+import AdminDashboard from './components/AdminDashboard';
 import { Container, ContainerSummary, ViewState } from './types';
-import { Search, Plus, Lock, ArrowRight, ShieldCheck, Eye } from 'lucide-react';
+import { Search, Plus, Lock, ArrowRight, ShieldCheck, Eye, Shield } from 'lucide-react';
 // check
 const App: React.FC = () => {
   const toast = useToast();
@@ -23,6 +25,7 @@ const App: React.FC = () => {
   // Selection State
   const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
   const [activeContainer, setActiveContainer] = useState<Container | null>(null);
+  const [adminToken, setAdminToken] = useState<string | null>(sessionStorage.getItem('super_admin_token'));
 
   // Form States
   const [createName, setCreateName] = useState('');
@@ -55,14 +58,39 @@ const App: React.FC = () => {
 
   // Deep linking: parse container ID from hash URL on mount
   useEffect(() => {
-    const hash = window.location.hash; // e.g. #/container/abc123
-    const match = hash.match(/^#\/container\/([a-fA-F0-9]+)$/);
-    if (match) {
-      const containerId = match[1];
-      setSelectedContainerId(containerId);
-      setViewState(ViewState.UNLOCK);
-    }
-  }, []);
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+
+      // Handle Admin route
+      if (hash === '#/admin' || hash === '#admin') {
+        if (adminToken) {
+          setViewState(ViewState.ADMIN_DASHBOARD);
+        } else {
+          setViewState(ViewState.ADMIN_LOGIN);
+        }
+        return;
+      }
+
+      // Handle Container Deep Link
+      const match = hash.match(/^#\/container\/([a-fA-F0-9]+)$/);
+      if (match) {
+        const containerId = match[1];
+        if (viewState !== ViewState.CONTAINER || activeContainer?.id !== containerId) {
+          setSelectedContainerId(containerId);
+          setViewState(ViewState.UNLOCK);
+        }
+      } else if (viewState !== ViewState.HOME && viewState !== ViewState.CREATE && !hash.includes('admin')) {
+        setViewState(ViewState.HOME);
+      }
+    };
+
+    // Run on mount
+    handleHashChange();
+
+    // Listen to changes
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [adminToken, viewState, activeContainer]);
 
   // Update URL hash when navigating
   const updateHash = useCallback((state: ViewState, containerId?: string) => {
@@ -70,6 +98,8 @@ const App: React.FC = () => {
       window.location.hash = `/container/${containerId}`;
     } else if (state === ViewState.UNLOCK && containerId) {
       window.location.hash = `/container/${containerId}`;
+    } else if (state === ViewState.ADMIN_LOGIN || state === ViewState.ADMIN_DASHBOARD) {
+      window.location.hash = `/admin`;
     } else {
       window.location.hash = '/';
     }
@@ -478,6 +508,40 @@ const App: React.FC = () => {
                 </form>
               </div>
             </div>
+          )}
+
+          {/* ADMIN VIEWS */}
+          {viewState === ViewState.ADMIN_LOGIN && (
+            <AdminLogin
+              onLoginSuccess={(token) => {
+                sessionStorage.setItem('super_admin_token', token);
+                setAdminToken(token);
+                setViewState(ViewState.ADMIN_DASHBOARD);
+                updateHash(ViewState.ADMIN_DASHBOARD);
+              }}
+              onClose={() => {
+                setViewState(ViewState.HOME);
+                updateHash(ViewState.HOME);
+              }}
+            />
+          )}
+
+          {viewState === ViewState.ADMIN_DASHBOARD && adminToken && (
+            <AdminDashboard
+              token={adminToken}
+              onLogout={() => {
+                sessionStorage.removeItem('super_admin_token');
+                setAdminToken(null);
+                setViewState(ViewState.HOME);
+                updateHash(ViewState.HOME);
+              }}
+              onSelectContainer={(id) => {
+                // Allow admin to bypass password
+                // For now, we'll just push them to the unlock screen like normal
+                // But we could auto-unlock if we wanted to build that backend logic
+                openUnlockScreen(id);
+              }}
+            />
           )}
 
           {/* UNLOCK VIEW */}
